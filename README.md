@@ -1,15 +1,12 @@
-# mapreduce-tfidf-nisakko
-mapreduce-tfidf-nisakko created by GitHub Classroom
-
-Nuri Civan Okudan - 2017510105
+# Nuri Civan Okudan - 2017510105
 
 Compile as follows:
 
-hadoop com.sun.tools.javac.Main InformationRetrieval.java
+# hadoop com.sun.tools.javac.Main InformationRetrieval.java
 
-jar -cvf InformationRetrieval.jar InformationRetrieval*.class
+# jar -cvf InformationRetrieval.jar InformationRetrieval*.class
 
-hadoop jar InformationRetrieval.jar InformationRetrieval /inputs /output1 /output2 /output3 /output4
+# hadoop jar InformationRetrieval.jar InformationRetrieval /inputs /output1 /output2 /output3 /output4
 
 where inputs = folder containing tweet text files
 
