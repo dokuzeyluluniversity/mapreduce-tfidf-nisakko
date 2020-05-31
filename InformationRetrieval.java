@@ -42,6 +42,7 @@ public class InformationRetrieval {
             this.docName.set(docName);
             this.n = n;
         }
+        
         public void set(Text word, Text docName, IntWritable n, IntWritable N){
             this.word.set(word);
             this.docName.set(docName);
@@ -185,11 +186,12 @@ public class InformationRetrieval {
         protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 
             String[] lines = value.toString().split("\n");
-            StringBuilder lineHolder = new StringBuilder(""); // It keeps all tweet information until it see "$PYTWEET".
+            StringBuilder lineHolder = new StringBuilder(""); // It keeps all tweet information until it sees "$PYTWEET".
             for (String line : lines){
                 if(line.startsWith("$PYTWEET$")){
                     if(lineHolder.length() != 0){
-
+                        // A new tweet has been encountered and there is a tweet previously held in the lineHolder.
+                        // So send the tweet held in the lineHolder to the method for parsing.
                         getTweetTextWords(lineHolder,context);
                     }
                     lineHolder = new StringBuilder(line);
@@ -197,7 +199,7 @@ public class InformationRetrieval {
                     lineHolder.append(" ").append(line);
                 }
             }
-            // when the loop finishes, for the last line of the tweet the method is called manually to parse the words in tweet
+            // when the loop finishes, for the last line of the tweet, the method is called manually to parse the words in lineHolder
             getTweetTextWords(lineHolder,context);
         }
     }
@@ -209,7 +211,7 @@ public class InformationRetrieval {
 
         @Override
         protected void reduce(Word key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
-            int sum = 0;
+            int sum = 0; // keeps track of how many times the word appears in the document
             for (IntWritable val : values) {
                 sum += val.get();
             }
@@ -256,7 +258,7 @@ public class InformationRetrieval {
             // we need to iterate through all the word objects with their extra information to write the result to the output.
             // Cache arraylist is used for this reason.
             ArrayList<Word> cache = new ArrayList<>();
-            int sum=0;
+            int sum=0; // keeps the total number of words in the document
 
             for(Word word: values){
                 Word w = new Word();
@@ -287,14 +289,14 @@ public class InformationRetrieval {
                     String docName = columns[1];
 
                     int n = Integer.parseInt(columns[2]);
-                    int N = Integer.parseInt(columns[3]);
-                    IntWritable iw = new IntWritable();
-                    IntWritable iw2 = new IntWritable();
-                    iw.set(n);
-                    iw2.set(N);
+                    int totalN = Integer.parseInt(columns[3]);
+                    IntWritable iwN = new IntWritable();
+                    IntWritable iwTotalN = new IntWritable();
+                    iwN.set(n);
+                    iwTotalN.set(totalN);
 
                     wordObject = new Word();
-                    wordObject.set(new Text(word),new Text(docName),iw,iw2);
+                    wordObject.set(new Text(word),new Text(docName),iwN,iwTotalN);
                     // Since we want to find out how many times a word has used in a document, the words are sent to the reducer as a key.
                     context.write(new Text(word),wordObject);
                 }
@@ -306,13 +308,12 @@ public class InformationRetrieval {
     public static class IrReduce3 extends Reducer<Text,Word,Text,IntWritable>{
         private final IntWritable result = new IntWritable();
 
-
         @Override
         protected void reduce(Text key, Iterable<Word> values, Context context) throws IOException, InterruptedException {
 
             //used to iterate through all word objects for a second time.
             ArrayList<Word> cache = new ArrayList<>();
-            int sum=0;
+            int sum=0; // keeps how many times the word is used in the corpus
 
             for(Word word: values){
                 Word w = new Word();
@@ -326,7 +327,6 @@ public class InformationRetrieval {
             for(Word word: cache){
                 context.write(new Text(word.toString(Word.Task.TASK3)),result);
             }
-
         }
     }
 
@@ -417,7 +417,7 @@ public class InformationRetrieval {
         job3.setOutputValueClass(IntWritable.class);
         FileInputFormat.addInputPath(job3, new Path(args[2]));
         FileOutputFormat.setOutputPath(job3, new Path(args[3]));
- 
+
         job3.waitForCompletion(true); // the fourth task runs after the third task ends.
 
         Configuration conf4 = new Configuration();
@@ -433,6 +433,5 @@ public class InformationRetrieval {
         FileOutputFormat.setOutputPath(job4, new Path(args[4]));
 
         System.exit(job4.waitForCompletion(true) ? 0 : 1);
-
     }
 }
